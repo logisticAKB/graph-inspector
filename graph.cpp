@@ -29,50 +29,36 @@ void Graph::read_graph(const std::string& file_name) {
                 }
                 break;
             }
-            case 'L': {
+            case 'L': { // возможно понадобится добавить обратные значения для неориентированных графов
                 in_file >> is_directed >> is_weighted;
-                if (is_weighted) {
-                    adj_list.resize(n);
-                    int v, w;
-                    for (int i = 0; i < n; i++) {
-                        std::string s;
-                        getline(in_file, s);
-                        std::istringstream ss(s);
-                        while (ss >> v >> w) {
+                if (is_weighted) adj_list.resize(n);
+                else unweighted_adj_list.resize(n);
+                int v, w;
+                std::string s;
+                for (int i = 0; i < n; i++) {
+                    getline(in_file, s);
+                    while (s.empty()) getline(in_file, s); // wtf
+                    std::istringstream ss(s);
+                    if (is_weighted) {
+                        while (ss >> v >> w)
                             adj_list[i].insert(std::make_pair(v - 1, w));
-                            if (!is_directed)
-                                adj_list[v - 1].insert(std::make_pair(i, w));
-                        }
-                    }
-                } else {
-                    unweighted_adj_list.resize(n);
-                    int v;
-                    for (int i = 0; i < n; i++) {
-                        std::string s;
-                        getline(in_file, s);
-                        std::istringstream ss(s);
-                        while (ss >> v) {
+                    } else {
+                        while (ss >> v)
                             unweighted_adj_list[i].insert(v - 1);
-                            if (!is_directed)
-                                unweighted_adj_list[i].insert(i);
-                        }
                     }
                 }
                 break;
             }
             case 'E': { // возможно понадобится добавить обратные пары для неориентированных графов
                 in_file >> m >> is_directed >> is_weighted;
-                if (is_weighted) {
-                    list_of_edges.resize(m);
-                    int v1 ,v2, w;
-                    for (int i = 0 ; i < m; i++) {
+                if (is_weighted) list_of_edges.resize(m);
+                else unweighted_list_of_edges.resize(m);
+                int v1 ,v2, w;
+                for (int i = 0 ; i < m; i++) {
+                    if (is_weighted) {
                         in_file >> v1 >> v2 >> w;
                         list_of_edges[i] = std::make_tuple(v1, v2, w);
-                    }
-                } else {
-                    unweighted_list_of_edges.resize(m);
-                    int v1 ,v2;
-                    for (int i = 0 ; i < m; i++) {
+                    } else {
                         in_file >> v1 >> v2;
                         unweighted_list_of_edges[i] = std::make_pair(v1, v2);
                     }
@@ -85,5 +71,68 @@ void Graph::read_graph(const std::string& file_name) {
 }
 
 void Graph::write_graph(const std::string& file_name) {
-    
+    std::ofstream out_file(file_name);
+    if (!out_file) {
+        std::cerr << "Output file open error \"" << file_name << "\"" << std::endl;
+        return;
+    } else {
+        out_file << view << ' ' << n << ' ';
+        switch (view) {
+            case 'C': {
+                out_file << is_weighted << std::endl;
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        out_file << adj_matrix[i][j] << ' ';
+                    }
+                    out_file << std::endl;
+                }
+                break;
+            }
+            case 'L': {
+                out_file << std::endl << is_directed << ' ' << is_weighted << std::endl;
+                for  (int i = 0; i < n; i++) {
+                    if (is_weighted) {
+                        for (auto it : adj_list[i]) {
+                            out_file << it.first + 1 << ' ' << it.second << ' ';
+                        }
+                    } else {
+                        for (auto it : unweighted_adj_list[i]) {
+                            out_file << it + 1 << ' ';
+                        }
+                    }
+                    out_file << std::endl;
+                }
+                break;
+            }
+            case 'E': {
+                out_file << m << std::endl;
+                out_file << is_directed << ' ' << is_weighted << std::endl;
+                for (int i = 0; i < m; i++) {
+                    if (is_weighted) {
+                        out_file << std::get<0>(list_of_edges[i]) << ' '
+                                 << std::get<1>(list_of_edges[i]) << ' '
+                                 << std::get<2>(list_of_edges[i]) << std::endl;
+                    } else {
+                        out_file << std::get<0>(list_of_edges[i]) << ' '
+                                 << std::get<1>(list_of_edges[i]) << std::endl;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    out_file.close();
+}
+
+void Graph::transform_to_adj_list() {
+    switch (view) {
+        case 'C': {
+            
+            break;
+        }
+        case 'E': {
+
+            break;
+        }
+    }
 }

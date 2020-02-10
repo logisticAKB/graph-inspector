@@ -22,8 +22,8 @@ int main() {
     //cout << a.capacity() << endl;
 
     auto *gr = new Graph();
-    gr->read_graph("../graph-examples/in.txt");
-
+    gr->read_graph("../graph-examples/in2.txt");
+    gr->write_graph("../graph-examples/out.txt");
     delete(gr);
 
 
