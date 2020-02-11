@@ -127,7 +127,11 @@ void Graph::write_graph(const std::string& file_name) {
 void Graph::transform_to_adj_list() {
     switch (view) {
         case 'C': {
-            
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+
+                }
+            }
             break;
         }
         case 'E': {
