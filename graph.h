@@ -38,6 +38,8 @@ private:
 
     std::vector<std::pair<int, int>> unweighted_list_of_edges;
     std::vector<std::tuple<int, int, int>> list_of_edges;
+
+    void release_memory(char view_to_release);
 };
 
 #endif //GRAPH_INSPECTOR_GRAPH_H

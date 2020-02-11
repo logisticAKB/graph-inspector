@@ -23,7 +23,8 @@ int main() {
 
     auto *gr = new Graph();
     gr->read_graph("../graph-examples/in2.txt");
-    gr->write_graph("../graph-examples/out.txt");
+    //gr->transform_to_list_of_edges();
+    //gr->write_graph("../graph-examples/out.txt");
     delete(gr);
 
 
