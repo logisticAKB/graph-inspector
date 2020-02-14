@@ -49,7 +49,7 @@ void Graph::read_graph(const std::string& file_name) {
         switch (view) {
             case 'C': {
                 m = 0;
-                in_file >> is_weighted;
+                in_file >> is_directed >> is_weighted;
                 adj_matrix.resize(n, std::vector<int>(n));
                 for (int i = 0; i < n; i++) {
                     for (int j = 0; j < n; j++) {
@@ -57,6 +57,7 @@ void Graph::read_graph(const std::string& file_name) {
                         if (adj_matrix[i][j]) m++;
                     }
                 }
+                if (!is_directed) m /= 2; // если в матрице есть обратные рёбра дл неор. гр.
                 break;
             }
             case 'L': {
@@ -64,7 +65,7 @@ void Graph::read_graph(const std::string& file_name) {
                 if (is_weighted) adj_list.resize(n);
                 else unweighted_adj_list.resize(n);
                 int v, w;
-                m = 0; // check
+                m = 0;
                 std::string s;
                 getline(in_file, s);
                 for (int i = 0; i < n; i++) {
@@ -74,30 +75,33 @@ void Graph::read_graph(const std::string& file_name) {
                     if (is_weighted) {
                         while (ss >> v >> w) {
                             adj_list[i].insert(std::make_pair(v - 1, w));
-                            if (v - 1 >= i) m++; // не работает((((
+                            m++;
                         }
                     } else {
                         while (ss >> v) {
                             unweighted_adj_list[i].insert(v - 1);
-                            if (v - 1 >= i) m++;
+                            m++;
                         }
                     }
                 }
-                std::cout << m << std::endl; // check
+                if (!is_directed) m /= 2;
                 break;
             }
-            case 'E': { // предполагается, что в файле даны обратные рёбра для неориент. графов
+            case 'E': { // добавил обратные ребра для неор. графов.
                 in_file >> m >> is_directed >> is_weighted;
+                if (!is_directed) m *= 2;
                 if (is_weighted) list_of_edges.resize(m);
                 else unweighted_list_of_edges.resize(m);
                 int v1 ,v2, w;
-                for (int i = 0 ; i < m; i++) {
+                for (int i = 0; i < m; !is_directed ? i += 2 : i++) {
                     if (is_weighted) {
                         in_file >> v1 >> v2 >> w;
                         list_of_edges[i] = std::make_tuple(v1, v2, w);
+                        if (!is_directed) list_of_edges[i + 1] = std::make_tuple(v2, v1, w);
                     } else {
                         in_file >> v1 >> v2;
                         unweighted_list_of_edges[i] = std::make_pair(v1, v2);
+                        if (!is_directed) unweighted_list_of_edges[i + 1] = std::make_pair(v2, v1);
                     }
                 }
                 break;
@@ -116,7 +120,7 @@ void Graph::write_graph(const std::string& file_name) {
         out_file << view << ' ' << n << ' ';
         switch (view) {
             case 'C': {
-                out_file << is_weighted << std::endl;
+                out_file << std::endl << is_directed << ' ' << is_weighted << std::endl;
                 for (int i = 0; i < n; i++) {
                     for (int j = 0; j < n; j++) {
                         out_file << adj_matrix[i][j] << ' ';
@@ -141,7 +145,7 @@ void Graph::write_graph(const std::string& file_name) {
                 }
                 break;
             }
-            case 'E': {
+            case 'E': { // поправить 2е ребра
                 out_file << m << std::endl;
                 out_file << is_directed << ' ' << is_weighted << std::endl;
                 for (int i = 0; i < m; i++) {
@@ -168,7 +172,6 @@ void Graph::transform_to_adj_list() {
     switch (view) {
         case 'C': {
             view = 'L';
-            is_directed = true;
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
                     if (adj_matrix[i][j] != 0) {
@@ -176,14 +179,13 @@ void Graph::transform_to_adj_list() {
                             adj_list[i].insert(std::make_pair(j, adj_matrix[i][j]));
                         else
                             unweighted_adj_list[i].insert(j);
-                        if (i > j) is_directed = false; // не будет работать если в графе между соседями есть циклы
                     }
                 }
             }
             release_memory('C');
             break;
         }
-        case 'E': {
+        case 'E': { // хммм, походу работает / надо поделить на m
             view = 'L';
             for (int i = 0; i < m; i++) {
                 if (is_weighted) {
@@ -221,7 +223,7 @@ void Graph::transform_to_adj_matrix() {
             release_memory('L');
             break;
         }
-        case 'E': {
+        case 'E': { // хммм, походу работает / почему??? / надо поделить на m
             view = 'C';
             for (int i = 0; i < m; i++) {
                 if (is_weighted) {
@@ -238,6 +240,7 @@ void Graph::transform_to_adj_matrix() {
 }
 
 void Graph::transform_to_list_of_edges() {
+    if (!is_directed) m *= 2;
     if (is_weighted) list_of_edges.resize(m);
     else unweighted_list_of_edges.resize(m);
 
@@ -245,16 +248,18 @@ void Graph::transform_to_list_of_edges() {
         case 'C': {
             view = 'E';
             int k = 0;
-            is_directed = true;
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
                     if (adj_matrix[i][j] != 0) {
-                        if (is_weighted)
+                        if (is_weighted) {
                             list_of_edges[k] = std::make_tuple(i + 1, j + 1, adj_matrix[i][j]);
-                        else
+                            if (!is_directed) list_of_edges[k + 1] = std::make_tuple(j + 1, i + 1, adj_matrix[i][j]);
+                        }
+                        else {
                             unweighted_list_of_edges[k] = std::make_pair(i + 1, j + 1);
-                        k++;
-                        if (i > j) is_directed = false; // не будет работать если в графе между соседями есть циклы
+                            if (!is_directed) unweighted_list_of_edges[k + 1] = std::make_pair(j + 1, i + 1);
+                        }
+                        k += 2;
                     }
                 }
             }
@@ -263,6 +268,18 @@ void Graph::transform_to_list_of_edges() {
         }
         case 'L': {
             view = 'E';
+            for (int i = 0; i < n; i++) {
+                if (is_weighted) {
+                    for (auto it : adj_list[i]) {
+                        // туда
+                        // сюда
+                    }
+                } else {
+                    for (auto it : unweighted_adj_list[i]) {
+
+                    }
+                }
+            }
 
             release_memory('L');
             break;
