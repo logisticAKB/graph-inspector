@@ -36,8 +36,8 @@ private:
     std::vector<std::set<int>> unweighted_adj_list;
     std::vector<std::map<int, int>> adj_list;
 
-    std::vector<std::pair<int, int>> unweighted_list_of_edges;
-    std::vector<std::tuple<int, int, int>> list_of_edges;
+    std::set<std::pair<int, int>> unweighted_list_of_edges;
+    std::map<std::pair<int, int>, int> list_of_edges;
 
     void release_memory(char view_to_release);
 };
