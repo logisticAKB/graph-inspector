@@ -66,36 +66,31 @@ void Graph::read_graph(const std::string& file_name) {
                 if (is_weighted) {
                     while (ss >> v >> w) {
                         adj_list[i].insert({v - 1, w});
-//                        if (!is_directed) adj_list[v - 1].insert({i, w});
                     }
                 } else {
                     while (ss >> v) {
                         unweighted_adj_list[i].insert(v - 1);
-//                        if (!is_directed) unweighted_adj_list[v - 1].insert(i);
                     }
                 }
             }
             break;
         }
-        /*case 'E': { // добавил обратные ребра для неор. графов.
+        case 'E': { // добавил обратные ребра для неор. графов.
             in_file >> m >> is_directed >> is_weighted;
-            if (!is_directed) m *= 2;
-            if (is_weighted) list_of_edges.resize(m);
-            else unweighted_list_of_edges.resize(m);
-            int v1 ,v2, w;
-            for (int i = 0; i < m; !is_directed ? i += 2 : i++) {
+            int from, to, w;
+            for (int i = 0; i < m; ++i) {
+                in_file >> from >> to;
                 if (is_weighted) {
-                    in_file >> v1 >> v2 >> w;
-                    list_of_edges[i] = std::make_tuple(v1, v2, w);
-                    if (!is_directed) list_of_edges[i + 1] = std::make_tuple(v2, v1, w);
+                    in_file >> w;
+                    list_of_edges.insert({{from - 1, to - 1}, w});
+                    if (!is_directed) list_of_edges.insert({{to - 1, from - 1}, w});
                 } else {
-                    in_file >> v1 >> v2;
-                    unweighted_list_of_edges[i] = std::make_pair(v1, v2);
-                    if (!is_directed) unweighted_list_of_edges[i + 1] = std::make_pair(v2, v1);
+                    unweighted_list_of_edges.insert({from - 1, to - 1});
+                    if (!is_directed) unweighted_list_of_edges.insert({to - 1, from - 1});
                 }
             }
             break;
-        }*/
+        }
     }
     in_file.close();
 }
@@ -114,7 +109,7 @@ void Graph::write_graph(const std::string& file_name) {
             }
             break;
         }
-        case 'L': { // TODO: удалить дубли для неор. графов
+        case 'L': {
             out_file << std::endl << is_directed << ' ' << is_weighted << std::endl;
             for  (int i = 0; i < n; i++) {
                 if (is_weighted) {
@@ -130,21 +125,32 @@ void Graph::write_graph(const std::string& file_name) {
             }
             break;
         }
-        /*case 'E': { // поправить 2е ребра
+        case 'E': { // обратные ребра для неор. графов не записываются в файл
             out_file << m << std::endl;
             out_file << is_directed << ' ' << is_weighted << std::endl;
-            for (int i = 0; i < m; i++) {
-                if (is_weighted) {
-                    out_file << std::get<0>(list_of_edges[i]) << ' '
-                             << std::get<1>(list_of_edges[i]) << ' '
-                             << std::get<2>(list_of_edges[i]) << std::endl;
-                } else {
-                    out_file << unweighted_list_of_edges[i].first << ' '
-                             << unweighted_list_of_edges[i].second << std::endl;
+
+            std::set<std::pair<int, int>> printed;
+            if (is_weighted) {
+                for (auto edge : list_of_edges) {
+                    int from = edge.first.first;
+                    int to = edge.first.second;
+                    if (printed.find({from, to}) == printed.end()) {
+                        out_file << from + 1 << ' ' << to + 1 << ' ' << edge.second << std::endl;
+                        printed.insert({to, from});
+                    }
+                }
+            } else {
+                for (auto edge : unweighted_list_of_edges) {
+                    int from = edge.first;
+                    int to = edge.second;
+                    if (printed.find({from, to}) == printed.end()) {
+                        out_file << from + 1 << ' ' << to + 1 << std::endl;
+                        printed.insert({to, from});
+                    }
                 }
             }
             break;
-        }*/
+        }
     }
     out_file.close();
 }
@@ -167,7 +173,13 @@ void Graph::add_edge(int from, int to, int weight) {
             break;
         }
         case 'E': {
-
+            if (is_weighted) {
+                list_of_edges.insert({{from - 1, to - 1}, weight});
+                if (!is_directed) list_of_edges.insert({{to - 1, from - 1}, weight});
+            } else {
+                unweighted_list_of_edges.insert({from - 1, to - 1});
+                if (!is_directed) unweighted_list_of_edges.insert({to - 1, from - 1});
+            }
             break;
         }
     }
@@ -180,17 +192,52 @@ void Graph::remove_edge(int from, int to) {
             if (!is_directed) adj_matrix[to - 1][from - 1] = 0;
         }
         case 'L': {
-            
+            if (is_weighted) {
+
+                auto to_remove = adj_list[from - 1].find(to - 1);
+                if (to_remove != adj_list[from - 1].end()) adj_list[from - 1].erase(to_remove);
+
+                to_remove = adj_list[to - 1].find(from - 1);
+                if (!is_directed && to_remove != adj_list[to - 1].end()) adj_list[to - 1].erase(to_remove);
+
+            } else {
+
+                auto to_remove = unweighted_adj_list[from - 1].find(to - 1);
+                if (to_remove != unweighted_adj_list[from - 1].end()) unweighted_adj_list[from - 1].erase(to_remove);
+
+                to_remove = unweighted_adj_list[to - 1].find(from - 1);
+                if (!is_directed && to_remove != unweighted_adj_list[to - 1].end())
+                    unweighted_adj_list[to - 1].erase(to_remove);
+
+            }
             break;
         }
         case 'E': {
+            if (is_weighted) {
 
+                auto to_remove = list_of_edges.find({from - 1, to - 1});
+                if (to_remove != list_of_edges.end()) list_of_edges.erase(to_remove);
+
+                to_remove = list_of_edges.find({to - 1, from - 1});
+                if (!is_directed && to_remove != list_of_edges.end())
+                    list_of_edges.erase(to_remove);
+
+            } else {
+
+                auto to_remove = unweighted_list_of_edges.find({from - 1, to - 1});
+                if (to_remove != unweighted_list_of_edges.end()) unweighted_list_of_edges.erase(to_remove);
+
+                to_remove = unweighted_list_of_edges.find({to - 1, from - 1});
+                if (!is_directed && to_remove != unweighted_list_of_edges.end())
+                    unweighted_list_of_edges.erase(to_remove);
+
+            }
             break;
         }
     }
 }
 
-int Graph::change_edge(int from, int to, int new_weight) { // вернуть старое
+int Graph::change_edge(int from, int to, int new_weight) { // возвращает прошлый вес ребра
     int res = -1;
     switch (view) {
         case 'C': {
@@ -200,11 +247,19 @@ int Graph::change_edge(int from, int to, int new_weight) { // вернуть с�
             break;
         }
         case 'L': {
-
+            if (is_weighted) {
+                res = adj_list[from - 1][to - 1];
+                adj_list[from - 1][to - 1] = new_weight;
+                if (!is_directed) adj_list[to - 1][from - 1] = new_weight;
+            }
             break;
         }
         case 'E': {
-
+            if (is_weighted) {
+                res = list_of_edges[{from - 1, to - 1}];
+                list_of_edges[{from - 1, to - 1}] = new_weight;
+                if (!is_directed) list_of_edges[{to - 1, from - 1}] = new_weight;
+            }
             break;
         }
     }
