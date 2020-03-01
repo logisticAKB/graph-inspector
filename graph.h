@@ -13,6 +13,7 @@
 class Graph {
 public:
     Graph();
+    Graph(int n);
 
     void read_graph(const std::string& file_name);
     void write_graph(const std::string& file_name);
@@ -24,6 +25,10 @@ public:
     void transform_to_adj_list();
     void transform_to_adj_matrix();
     void transform_to_list_of_edges();
+
+    Graph get_spaing_tree_prima();
+    Graph get_spaing_tree_kruscal();
+    Graph get_spaing_tree_boruvka();
 
 private:
     int n, m;

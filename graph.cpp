@@ -9,6 +9,15 @@
 
 Graph::Graph() = default;
 
+Graph::Graph(int n) {
+    Graph::n = n;
+    view = 'L';
+    is_weighted = true;
+    is_directed = false;
+    
+    adj_list.resize(n);
+}
+
 void Graph::release_memory(char view_to_release) {
     switch (view_to_release) {
         case 'C': {
