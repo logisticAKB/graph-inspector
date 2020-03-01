@@ -266,7 +266,7 @@ int Graph::change_edge(int from, int to, int new_weight) { // возвращае
     return res;
 }
 
-/*
+
 void Graph::transform_to_adj_list() {
     if (is_weighted) adj_list.resize(n);
     else unweighted_adj_list.resize(n);
@@ -278,7 +278,7 @@ void Graph::transform_to_adj_list() {
                 for (int j = 0; j < n; j++) {
                     if (adj_matrix[i][j] != 0) {
                         if (is_weighted)
-                            adj_list[i].insert(std::make_pair(j, adj_matrix[i][j]));
+                            adj_list[i].insert({j, adj_matrix[i][j]});
                         else
                             unweighted_adj_list[i].insert(j);
                     }
@@ -287,16 +287,20 @@ void Graph::transform_to_adj_list() {
             release_memory('C');
             break;
         }
-        case 'E': { // хммм, походу работает / надо поделить на m
+        case 'E': {
             view = 'L';
-            for (int i = 0; i < m; i++) {
-                if (is_weighted) {
-                    adj_list[std::get<0>(list_of_edges[i]) - 1].insert(
-                            std::make_pair(std::get<1>(list_of_edges[i]) - 1,
-                                    std::get<2>(list_of_edges[i])));
-                } else {
-                    unweighted_adj_list[unweighted_list_of_edges[i].first - 1].insert(
-                            unweighted_list_of_edges[i].second - 1);
+            if (is_weighted) {
+                for (auto edge : list_of_edges) {
+                    int from = edge.first.first;
+                    int to = edge.first.second;
+                    int w = edge.second;
+                    adj_list[from].insert({to, w});
+                }
+            } else {
+                for (auto edge : unweighted_list_of_edges) {
+                    int from = edge.first;
+                    int to = edge.second;
+                    unweighted_adj_list[from].insert(to);
                 }
             }
             release_memory('E');
@@ -325,14 +329,20 @@ void Graph::transform_to_adj_matrix() {
             release_memory('L');
             break;
         }
-        case 'E': { // хммм, походу работает / почему??? / надо поделить на m
+        case 'E': {
             view = 'C';
-            for (int i = 0; i < m; i++) {
-                if (is_weighted) {
-                    adj_matrix[std::get<0>(list_of_edges[i]) - 1][std::get<1>(list_of_edges[i]) - 1] =
-                            std::get<2>(list_of_edges[i]);
-                } else {
-                    adj_matrix[unweighted_list_of_edges[i].first - 1][unweighted_list_of_edges[i].second - 1] = 1;
+            if (is_weighted) {
+                for (auto edge : list_of_edges) {
+                    int from = edge.first.first;
+                    int to = edge.first.second;
+                    int w = edge.second;
+                    adj_matrix[from][to] = w;
+                }
+            } else {
+                for (auto edge : unweighted_list_of_edges) {
+                    int from = edge.first;
+                    int to = edge.second;
+                    adj_matrix[from][to] = 1;
                 }
             }
             release_memory('E');
@@ -342,29 +352,24 @@ void Graph::transform_to_adj_matrix() {
 }
 
 void Graph::transform_to_list_of_edges() {
-    if (!is_directed) m *= 2;
-    if (is_weighted) list_of_edges.resize(m);
-    else unweighted_list_of_edges.resize(m);
-
     switch (view) {
         case 'C': {
             view = 'E';
-            int k = 0;
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    if (adj_matrix[i][j] != 0) {
+            m = 0;
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    if (adj_matrix[i][j]) {
                         if (is_weighted) {
-                            list_of_edges[k] = std::make_tuple(i + 1, j + 1, adj_matrix[i][j]);
-                            if (!is_directed) list_of_edges[k + 1] = std::make_tuple(j + 1, i + 1, adj_matrix[i][j]);
+                            list_of_edges.insert({{i, j}, adj_matrix[i][j]});
+                        } else {
+                            unweighted_list_of_edges.insert({i, j});
                         }
-                        else {
-                            unweighted_list_of_edges[k] = std::make_pair(i + 1, j + 1);
-                            if (!is_directed) unweighted_list_of_edges[k + 1] = std::make_pair(j + 1, i + 1);
-                        }
-                        k += 2;
+                        if (i == j && !is_directed) m++;
+                        m++;
                     }
                 }
             }
+            if (!is_directed) m /= 2; // возможно перенести эту строчку во write_graph
             release_memory('C');
             break;
         }
@@ -373,19 +378,23 @@ void Graph::transform_to_list_of_edges() {
             for (int i = 0; i < n; i++) {
                 if (is_weighted) {
                     for (auto it : adj_list[i]) {
-                        // туда
-                        // сюда
+                        list_of_edges.insert({{i, it.first}, it.second});
+
+                        if (i == it.first && !is_directed) m++;
+                        m++;
                     }
                 } else {
                     for (auto it : unweighted_adj_list[i]) {
+                        unweighted_list_of_edges.insert({i, it});
 
+                        if (i == it && !is_directed) m++;
+                        m++;
                     }
                 }
             }
-
+            if (!is_directed) m /= 2; // возможно перенести эту строчку во write_graph
             release_memory('L');
             break;
         }
     }
 }
-*/

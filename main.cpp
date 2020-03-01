@@ -23,7 +23,7 @@ int main() {
 
     auto *gr = new Graph();
     gr->read_graph("../graph-examples/in.txt");
-    cout << gr->change_edge(7, 4, 10);
+    gr->transform_to_list_of_edges();
     gr->write_graph("../graph-examples/out.txt");
     delete(gr);
 
