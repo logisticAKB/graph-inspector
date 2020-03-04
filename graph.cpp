@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <climits>
 
 #include "graph.h"
 
@@ -406,4 +407,20 @@ void Graph::transform_to_list_of_edges() {
             break;
         }
     }
+}
+
+Graph Graph::get_spanning_tree_prima() {
+    Graph spanning_tree(n);
+    transform_to_adj_list();
+
+    std::vector<int> min_weight(n, INT_MAX);
+    std::set<std::pair<int, int>> q;
+
+    min_weight[0] = 0;
+    q.insert({min_weight[0], 0});
+    for (int i = 0; i < n; ++i) {
+        int v = ;
+    }
+
+    return spanning_tree;
 }
