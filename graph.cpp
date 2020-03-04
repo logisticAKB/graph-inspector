@@ -410,17 +410,31 @@ void Graph::transform_to_list_of_edges() {
 }
 
 Graph Graph::get_spanning_tree_prima() {
-    Graph spanning_tree(n);
     transform_to_adj_list();
 
-    std::vector<int> min_weight(n, INT_MAX);
+    std::vector<std::pair<int, int>> min_weight(n, {INT_MAX, -1});
     std::set<std::pair<int, int>> q;
+    Graph spanning_tree(n);
 
-    min_weight[0] = 0;
-    q.insert({min_weight[0], 0});
+    min_weight[0].first = 0;
+    q.insert({0, 0});
     for (int i = 0; i < n; ++i) {
-        int v = ;
-    }
+        int v = q.begin()->second;
+        q.erase(q.begin());
 
+        if (min_weight[v].second != -1)
+            spanning_tree.add_edge(v + 1, min_weight[v].second + 1, min_weight[v].first);
+
+        for (auto edge : adj_list[v]) {
+            int u = edge.first;
+            int w = edge.second;
+            if (w < min_weight[u].first) {
+                q.erase({min_weight[u].first, u});
+                min_weight[u].first = w;
+                min_weight[u].second = v;
+                q.insert({w, u});
+            }
+        }
+    }
     return spanning_tree;
 }
