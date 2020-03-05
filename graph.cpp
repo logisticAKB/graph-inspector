@@ -5,8 +5,10 @@
 #include <fstream>
 #include <sstream>
 #include <climits>
+#include <algorithm>
 
 #include "graph.h"
+#include "dsu.h"
 
 Graph::Graph() = default;
 
@@ -436,5 +438,31 @@ Graph Graph::get_spanning_tree_prima() {
             }
         }
     }
+    return spanning_tree;
+}
+
+Graph Graph::get_spanning_tree_kruscal() {
+    transform_to_adj_list();
+
+    Graph spanning_tree(n);
+    DSU dsu(n);
+    std::vector<std::pair<int, int>> cur_edges;
+    for (int i = 0; i < n; ++i) {
+
+        cur_edges.clear();
+        cur_edges.reserve(adj_list[i].size());
+        for (auto edge : adj_list[i]) {
+            cur_edges.emplace_back(edge.second, edge.first);
+        }
+        sort(cur_edges.begin(), cur_edges.end());
+
+        for (auto edge : cur_edges) {
+            if (dsu.find(edge.second) != dsu.find(i)) {
+                spanning_tree.add_edge(i + 1, edge.second + 1, edge.first);
+                dsu.unite(i, edge.second);
+            }
+        }
+    }
+
     return spanning_tree;
 }

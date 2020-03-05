@@ -6,6 +6,7 @@
 DSU::DSU(int n) {
     parent.resize(n);
     rank.resize(n);
+    for (int i = 0; i < n; ++i) make(i);
 }
 
 void DSU::make(int x) {

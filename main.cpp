@@ -22,11 +22,11 @@ int main() {
     //a = {};
     //cout << a.capacity() << endl;
 
-//    auto *gr = new Graph();
-//    gr->read_graph("../graph-examples/in.txt");
-//    Graph g = gr->get_spanning_tree_prima();
-//    g.write_graph("../graph-examples/out.txt");
-//    delete(gr);
+    auto *gr = new Graph();
+    gr->read_graph("../graph-examples/in.txt");
+    Graph g = gr->get_spanning_tree_kruscal();
+    g.write_graph("../graph-examples/out.txt");
+    delete(gr);
 
     return 0;
 }
