@@ -30,6 +30,10 @@ public:
     Graph get_spanning_tree_kruscal();
     Graph get_spanning_tree_boruvka();
 
+    int check_euler(bool &circle_exist);
+    std::vector<int> get_euleran_tour_fleri();
+    std::vector<int> get_euleran_tour_effective();
+
 private:
     int n, m;
     char view;

@@ -387,6 +387,7 @@ void Graph::transform_to_list_of_edges() {
         }
         case 'L': {
             view = 'E';
+            m = 0;
             for (int i = 0; i < n; i++) {
                 if (is_weighted) {
                     for (auto it : adj_list[i]) {
@@ -499,4 +500,16 @@ Graph Graph::get_spanning_tree_boruvka() {
     }
 
     return spanning_tree;
+}
+
+int Graph::check_euler(bool &circle_exist) {
+    transform_to_adj_list();
+
+    int k_odd_vert = 0;
+    for (int i = 0; i < n; ++i) {
+        if (adj_list[i].size() & 1) k_odd_vert++;
+    }
+    circle_exist = (n - k_odd_vert == n);
+    if (k_odd_vert <= 2) return 1; // TODO: взять вершину из компоненты св. с ребрами
+    return 0; // TODO: написать второй критерий
 }

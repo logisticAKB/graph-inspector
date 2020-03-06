@@ -10,23 +10,23 @@
 
 class Graph {
 public:
-    Graph();
+    Graph() {};
     Graph(int n);
 
-    void read_graph(const std::string& file_name);
-    void write_graph(const std::string& file_name);
+    void readGraph(const std::string& file_name);
+    void writeGraph(const std::string& file_name);
 
-    void add_edge(int from, int to, int weight);
-    void remove_edge(int from, int to);
-    int change_edge(int from, int to, int new_weight);
+    void addEdge(int from, int to, int weight);
+    void removeEdge(int from, int to);
+    int changeEdge(int from, int to, int new_weight);
 
-    void transform_to_adj_list();
-    void transform_to_adj_matrix();
-    void transform_to_list_of_edges();
+    void transformToAdjList();
+    void transformToAdjMatrix();
+    void transformToListOfEdges();
 
-    Graph get_spanning_tree_prima();
-    Graph get_spanning_tree_kruscal();
-    Graph get_spanning_tree_boruvka();
+    Graph getSpaingTreePrima();
+    Graph getSpaingTreeKruscal();
+    Graph getSpaingTreeBoruvka();
 
 private:
     int n, m;
@@ -84,7 +84,7 @@ void DSU::unite(int x, int y) {
     }
 }
 
-Graph::Graph() = default;
+//Graph::Graph();
 
 Graph::Graph(int n) {
     Graph::n = n;
@@ -124,7 +124,7 @@ void Graph::release_memory(char view_to_release) {
     }
 }
 
-void Graph::read_graph(const std::string& file_name) {
+void Graph::readGraph(const std::string& file_name) {
     std::ifstream in_file(file_name);
     in_file >> view >> n;
     switch (view) {
@@ -181,7 +181,7 @@ void Graph::read_graph(const std::string& file_name) {
     in_file.close();
 }
 
-void Graph::write_graph(const std::string& file_name) {
+void Graph::writeGraph(const std::string& file_name) {
     std::ofstream out_file(file_name);
     out_file << view << ' ' << n << ' ';
     switch (view) {
@@ -241,7 +241,7 @@ void Graph::write_graph(const std::string& file_name) {
     out_file.close();
 }
 
-void Graph::add_edge(int from, int to, int weight) {
+void Graph::addEdge(int from, int to, int weight) {
     switch (view) {
         case 'C': {
             adj_matrix[from - 1][to - 1] = is_weighted ? weight : 1;
@@ -271,7 +271,7 @@ void Graph::add_edge(int from, int to, int weight) {
     }
 }
 
-void Graph::remove_edge(int from, int to) {
+void Graph::removeEdge(int from, int to) {
     switch (view) {
         case 'C': {
             adj_matrix[from - 1][to - 1] = 0;
@@ -323,7 +323,7 @@ void Graph::remove_edge(int from, int to) {
     }
 }
 
-int Graph::change_edge(int from, int to, int new_weight) { // возвращает прошлый вес ребра
+int Graph::changeEdge(int from, int to, int new_weight) { // возвращает прошлый вес ребра
     int res = -1;
     switch (view) {
         case 'C': {
@@ -353,7 +353,7 @@ int Graph::change_edge(int from, int to, int new_weight) { // возвращае
 }
 
 
-void Graph::transform_to_adj_list() {
+void Graph::transformToAdjList() {
     if (is_weighted) adj_list.resize(n);
     else unweighted_adj_list.resize(n);
 
@@ -395,7 +395,7 @@ void Graph::transform_to_adj_list() {
     }
 }
 
-void Graph::transform_to_adj_matrix() {
+void Graph::transformToAdjMatrix() {
     adj_matrix.resize(n, std::vector<int>(n, 0));
 
     switch (view) {
@@ -437,7 +437,7 @@ void Graph::transform_to_adj_matrix() {
     }
 }
 
-void Graph::transform_to_list_of_edges() {
+void Graph::transformToListOfEdges() {
     switch (view) {
         case 'C': {
             view = 'E';
@@ -455,12 +455,13 @@ void Graph::transform_to_list_of_edges() {
                     }
                 }
             }
-            if (!is_directed) m /= 2; // возможно перенести эту строчку во write_graph
+            if (!is_directed) m /= 2; // возможно перенести эту строчку во writeGraph
             release_memory('C');
             break;
         }
         case 'L': {
             view = 'E';
+            m = 0;
             for (int i = 0; i < n; i++) {
                 if (is_weighted) {
                     for (auto it : adj_list[i]) {
@@ -478,15 +479,15 @@ void Graph::transform_to_list_of_edges() {
                     }
                 }
             }
-            if (!is_directed) m /= 2; // возможно перенести эту строчку во write_graph
+            if (!is_directed) m /= 2; // возможно перенести эту строчку во writeGraph
             release_memory('L');
             break;
         }
     }
 }
 
-Graph Graph::get_spanning_tree_prima() {
-    transform_to_adj_list();
+Graph Graph::getSpaingTreePrima() {
+    transformToAdjList();
 
     std::vector<std::pair<int, int>> min_weight(n, {INT_MAX, -1});
     std::set<std::pair<int, int>> q;
@@ -499,7 +500,7 @@ Graph Graph::get_spanning_tree_prima() {
         q.erase(q.begin());
 
         if (min_weight[v].second != -1)
-            spanning_tree.add_edge(v + 1, min_weight[v].second + 1, min_weight[v].first);
+            spanning_tree.addEdge(v + 1, min_weight[v].second + 1, min_weight[v].first);
 
         for (auto edge : adj_list[v]) {
             int u = edge.first;
@@ -515,8 +516,8 @@ Graph Graph::get_spanning_tree_prima() {
     return spanning_tree;
 }
 
-Graph Graph::get_spanning_tree_kruscal() {
-    transform_to_adj_list();
+Graph Graph::getSpaingTreeKruscal() {
+    transformToAdjList();
 
     Graph spanning_tree(n);
     DSU dsu(n);
@@ -532,7 +533,7 @@ Graph Graph::get_spanning_tree_kruscal() {
 
         for (auto edge : cur_edges) {
             if (dsu.find(edge.second) != dsu.find(i)) {
-                spanning_tree.add_edge(i + 1, edge.second + 1, edge.first);
+                spanning_tree.addEdge(i + 1, edge.second + 1, edge.first);
                 dsu.unite(i, edge.second);
             }
         }
@@ -541,8 +542,8 @@ Graph Graph::get_spanning_tree_kruscal() {
     return spanning_tree;
 }
 
-Graph Graph::get_spanning_tree_boruvka() {
-    transform_to_adj_list();
+Graph Graph::getSpaingTreeBoruvka() {
+    transformToAdjList();
 
     Graph spanning_tree(n);
     DSU dsu(n);
@@ -566,7 +567,7 @@ Graph Graph::get_spanning_tree_boruvka() {
             int w = min_edge.second;
             if (u != -1 && v != -1) {
                 dsu.unite(u, v);
-                spanning_tree.add_edge(u + 1, v + 1, w);
+                spanning_tree.addEdge(u + 1, v + 1, w);
                 edges_in_tree++;
             }
         }
@@ -575,11 +576,14 @@ Graph Graph::get_spanning_tree_boruvka() {
     return spanning_tree;
 }
 
-int main() {
-    auto *gr = new Graph();
-    gr->read_graph("in.txt");
-    Graph g = gr->get_spanning_tree_boruvka();
-    g.write_graph("out.txt");
-    delete(gr);
+int main()
+{
+    Graph g;
+    g.readGraph("input.txt");
+    //Graph gg=g.getSpaingTreeBoruvka();
+    Graph gg = g.getSpaingTreeKruscal();
+    // Graph gg=g.getSpaingTreePrima();
+    gg.transformToListOfEdges();
+    gg.writeGraph("output.txt");
     return 0;
 }
