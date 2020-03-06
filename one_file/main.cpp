@@ -1,14 +1,88 @@
-//
-// Created by alexey on 08.02.2020.
-//
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <climits>
 #include <algorithm>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
 
-#include "graph.h"
-#include "dsu.h"
+class Graph {
+public:
+    Graph();
+    Graph(int n);
+
+    void read_graph(const std::string& file_name);
+    void write_graph(const std::string& file_name);
+
+    void add_edge(int from, int to, int weight);
+    void remove_edge(int from, int to);
+    int change_edge(int from, int to, int new_weight);
+
+    void transform_to_adj_list();
+    void transform_to_adj_matrix();
+    void transform_to_list_of_edges();
+
+    Graph get_spanning_tree_prima();
+    Graph get_spanning_tree_kruscal();
+    Graph get_spanning_tree_boruvka();
+
+private:
+    int n, m;
+    char view;
+    bool is_weighted;
+    bool is_directed;
+
+    std::vector<std::vector<int>> adj_matrix;
+
+    std::vector<std::set<int>> unweighted_adj_list;
+    std::vector<std::map<int, int>> adj_list;
+
+    std::set<std::pair<int, int>> unweighted_list_of_edges;
+    std::map<std::pair<int, int>, int> list_of_edges;
+
+    void release_memory(char view_to_release);
+};
+
+class DSU {
+public:
+    DSU(int n);
+
+    void make(int x);
+    int find(int x);
+    void unite(int x, int y);
+
+private:
+    std::vector<int> parent;
+    std::vector<int> rank;
+};
+
+DSU::DSU(int n) {
+    parent.resize(n);
+    rank.resize(n);
+    for (int i = 0; i < n; ++i) make(i);
+}
+
+void DSU::make(int x) {
+    parent[x] = x;
+    rank[x] = 0;
+}
+
+int DSU::find(int x) {
+    if (parent[x] == x) return x;
+    return find(parent[x]);
+}
+
+void DSU::unite(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if (x != y) {
+        if (rank[x] >= rank[y]) parent[y] = x;
+        else parent[x] = y;
+        if (rank[x] == rank[y]) rank[y]++;
+    }
+}
 
 Graph::Graph() = default;
 
@@ -17,7 +91,7 @@ Graph::Graph(int n) {
     view = 'L';
     is_weighted = true;
     is_directed = false;
-    
+
     adj_list.resize(n);
 }
 
@@ -499,4 +573,13 @@ Graph Graph::get_spanning_tree_boruvka() {
     }
 
     return spanning_tree;
+}
+
+int main() {
+    auto *gr = new Graph();
+    gr->read_graph("in.txt");
+    Graph g = gr->get_spanning_tree_boruvka();
+    g.write_graph("out.txt");
+    delete(gr);
+    return 0;
 }

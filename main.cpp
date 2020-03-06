@@ -24,7 +24,7 @@ int main() {
 
     auto *gr = new Graph();
     gr->read_graph("../graph-examples/in.txt");
-    Graph g = gr->get_spanning_tree_kruscal();
+    Graph g = gr->get_spanning_tree_boruvka();
     g.write_graph("../graph-examples/out.txt");
     delete(gr);
 
