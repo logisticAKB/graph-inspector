@@ -24,8 +24,11 @@ int main() {
 
     auto *gr = new Graph();
     gr->read_graph("../graph-examples/in.txt");
-    Graph g = gr->get_spanning_tree_boruvka();
-    g.write_graph("../graph-examples/out.txt");
+//    Graph g = gr->get_spanning_tree_boruvka();
+//    g.write_graph("../graph-examples/out.txt");
+    bool circle_exist;
+    cout << gr->check_euler(circle_exist) << endl;
+    cout << circle_exist << endl;
     delete(gr);
 
     return 0;

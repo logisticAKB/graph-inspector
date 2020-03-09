@@ -507,9 +507,30 @@ int Graph::check_euler(bool &circle_exist) {
 
     int k_odd_vert = 0;
     for (int i = 0; i < n; ++i) {
-        if (adj_list[i].size() & 1) k_odd_vert++;
+        if (unweighted_adj_list[i].size() & 1) k_odd_vert++;
     }
-    circle_exist = (n - k_odd_vert == n);
-    if (k_odd_vert <= 2) return 1; // TODO: взять вершину из компоненты св. с ребрами
-    return 0; // TODO: написать второй критерий
+    int res = 0;
+    if (k_odd_vert <= 2) {
+        DSU dsu(n);
+        for (int i = 0; i < n; ++i) {
+            for (auto edge : unweighted_adj_list[i]) dsu.unite(i, edge);
+        }
+        std::map<int, int> comp;
+        for (int i = 0; i < n; ++i) comp[dsu.find(i)]++;
+        bool is_ok = true;
+        for (auto it : comp) {
+            if (it.second > 1) {
+                if (is_ok) {
+                    res = it.first + 1;
+                    is_ok = false;
+                }
+                else {
+                    res = 0;
+                    break;
+                }
+            }
+        }
+    }
+    circle_exist = (k_odd_vert == 0) && res;
+    return res;
 }
