@@ -28,8 +28,11 @@ int main() {
 //    g.write_graph("../graph-examples/out.txt");
     bool circle_exist;
     cout << gr->check_euler(circle_exist) << endl;
-    cout << circle_exist << endl;
+    cout << "has cycle: " << circle_exist << endl;
+    vector<int> v = gr->get_eulerian_tour_fleri();
+    for (auto i : v) cout << i << ' ';
     delete(gr);
+
 
     return 0;
 }

@@ -50,6 +50,32 @@ void Graph::release_memory(char view_to_release) {
     }
 }
 
+void Graph::dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges) {
+    used[u] = true;
+    enter[u] = ret[u] = time++;
+    for (auto v : edges[u]) {
+        if (v == p) continue;
+        if (used[v])
+            ret[u] = std::min(ret[u], enter[v]);
+        else {
+            dfs(v, u, time, used, edges, enter, ret, bridges);
+            ret[u] = std::min(ret[u], ret[v]);
+            if (ret[v] > enter[u]) bridges.emplace_back(u, v);
+        }
+    }
+}
+
+bool Graph::is_bridge(int u, int v, std::vector<std::set<int>> &edges) {
+    std::vector<int> enter(n), ret(n);
+    std::vector<char> used(n);
+    std::vector<std::pair<int, int>> bridges;
+    dfs(u, -1, 0, used, edges, enter, ret, bridges);
+    for (auto bridge : bridges)  {
+        if (bridge == std::make_pair(u, v)) return true;
+    }
+    return false;
+}
+
 void Graph::read_graph(const std::string& file_name) {
     std::ifstream in_file(file_name);
     in_file >> view >> n;
@@ -505,11 +531,13 @@ Graph Graph::get_spanning_tree_boruvka() {
 int Graph::check_euler(bool &circle_exist) {
     transform_to_adj_list();
 
-    int k_odd_vert = 0;
+    int k_odd_vert = 0, res = 0;
     for (int i = 0; i < n; ++i) {
-        if (unweighted_adj_list[i].size() & 1) k_odd_vert++;
+        if (unweighted_adj_list[i].size() & 1) {
+            k_odd_vert++;
+            res = i + 1;
+        }
     }
-    int res = 0;
     if (k_odd_vert <= 2) {
         DSU dsu(n);
         for (int i = 0; i < n; ++i) {
@@ -521,7 +549,7 @@ int Graph::check_euler(bool &circle_exist) {
         for (auto it : comp) {
             if (it.second > 1) {
                 if (is_ok) {
-                    res = it.first + 1;
+                    if (!res) res = it.first + 1;
                     is_ok = false;
                 }
                 else {
@@ -533,4 +561,29 @@ int Graph::check_euler(bool &circle_exist) {
     }
     circle_exist = (k_odd_vert == 0) && res;
     return res;
+}
+
+std::vector<int> Graph::get_eulerian_tour_fleri() {
+    transform_to_adj_list();
+
+    std::vector<std::set<int>> edges(unweighted_adj_list);
+    std::vector<int> tour;
+    tour.reserve(n);
+
+    bool has_cycle;
+    int u = check_euler(has_cycle) - 1;
+    tour.push_back(u + 1);
+    while (!edges[u].empty()) {
+        int to = -1;
+        for (int v : edges[u]) {
+            to = v;
+            if (!is_bridge(u, v, edges)) break;
+        }
+        tour.push_back(to + 1);
+        edges[u].erase(to);
+        edges[to].erase(u);
+        u = to;
+    }
+
+    return tour;
 }

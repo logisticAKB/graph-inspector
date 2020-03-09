@@ -31,8 +31,8 @@ public:
     Graph get_spanning_tree_boruvka();
 
     int check_euler(bool &circle_exist);
-    std::vector<int> get_euleran_tour_fleri();
-    std::vector<int> get_euleran_tour_effective();
+    std::vector<int> get_eulerian_tour_fleri();
+    std::vector<int> get_eulerian_tour_effective();
 
 private:
     int n, m;
@@ -49,6 +49,8 @@ private:
     std::map<std::pair<int, int>, int> list_of_edges;
 
     void release_memory(char view_to_release);
+    void dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges);
+    bool is_bridge(int u, int v, std::vector<std::set<int>> &edges);
 };
 
 #endif //GRAPH_INSPECTOR_GRAPH_H
