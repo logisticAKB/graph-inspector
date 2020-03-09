@@ -6,6 +6,7 @@
 #include <sstream>
 #include <climits>
 #include <algorithm>
+#include <stack>
 
 #include "graph.h"
 #include "dsu.h"
@@ -583,6 +584,33 @@ std::vector<int> Graph::get_eulerian_tour_fleri() {
         edges[u].erase(to);
         edges[to].erase(u);
         u = to;
+    }
+
+    return tour;
+}
+
+std::vector<int> Graph::get_eulerian_tour_effective() {
+    transform_to_adj_list();
+
+    std::vector<std::set<int>> edges(unweighted_adj_list);
+    std::stack<int> s;
+    std::vector<int> tour;
+    tour.reserve(n);
+
+    bool has_cycle;
+    int u = check_euler(has_cycle) - 1;
+    s.push(u);
+    while (!s.empty()) {
+        int v = s.top();
+        if (!edges[v].empty()) {
+            u = *edges[v].begin();
+            edges[v].erase(u);
+            edges[u].erase(v);
+            s.push(u);
+        } else {
+            tour.push_back(s.top() + 1);
+            s.pop();
+        }
     }
 
     return tour;

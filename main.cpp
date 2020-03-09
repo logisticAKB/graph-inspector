@@ -29,7 +29,7 @@ int main() {
     bool circle_exist;
     cout << gr->check_euler(circle_exist) << endl;
     cout << "has cycle: " << circle_exist << endl;
-    vector<int> v = gr->get_eulerian_tour_fleri();
+    vector<int> v = gr->get_eulerian_tour_effective();
     for (auto i : v) cout << i << ' ';
     delete(gr);
 
