@@ -66,9 +66,29 @@ void Graph::dfs(int u, int p, int time, std::vector<char> &used, std::vector<std
     }
 }
 
+void Graph::dfs2(int v, char c, std::vector<char> &marks, int &res) {
+    marks[v] = c;
+    for (int u : unweighted_adj_list[v]) {
+        if (marks[u] == ' ') dfs2(u, c == 'A' ? 'B' : 'A', marks, res);
+        else if (marks[u] == c) res = 0;
+    }
+}
+
+bool Graph::dfs3(int v, std::vector<char> &used, std::vector<int> &parent) {
+    if (used[v]) return false;
+    used[v] = true;
+    for (int u : unweighted_adj_list[v]) {
+        if (parent[u] == -1 || dfs3(parent[u], used, parent)) {
+            parent[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Graph::is_bridge(int u, int v, std::vector<std::set<int>> &edges) {
     std::vector<int> enter(n), ret(n);
-    std::vector<char> used(n);
+    std::vector<char> used(n); // FIXME: assign(false)
     std::vector<std::pair<int, int>> bridges;
     dfs(u, -1, 0, used, edges, enter, ret, bridges);
     for (auto bridge : bridges)  {
@@ -614,4 +634,46 @@ std::vector<int> Graph::get_eulerian_tour_effective() {
     }
 
     return tour;
+}
+
+int Graph::check_bipart(std::vector<char> &marks) {
+    int res = 1;
+    for (int i = 0; i < n; ++i) {
+        if (marks[i] == ' ' && res) dfs2(i, 'A', marks,res);
+    }
+    return res;
+}
+
+std::vector<std::pair<int, int>> Graph::get_max_matching_bipart() {
+    transform_to_adj_list();
+
+    std::vector<char> used(n);
+    std::vector<char> used1(n);
+    std::vector<int> parent(n, -1);
+
+    for (int i = 0; i < n; ++i) {
+        for (int u : unweighted_adj_list[i]) {
+            if (parent[u] == -1) {
+                parent[u] = i;
+                used1[i] = true;
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (used1[i]) continue;
+        used.assign(n, false);
+        dfs3(i, used, parent);
+    }
+
+    std::vector<std::pair<int, int>> res;
+    for (int i = 0; i < n; ++i) {
+        if (parent[i] != -1) {
+            res.emplace_back(parent[i] + 1, i + 1);
+            parent[parent[i]] = -1;
+        }
+    }
+
+    return res;
 }

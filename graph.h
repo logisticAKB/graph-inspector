@@ -34,6 +34,9 @@ public:
     std::vector<int> get_eulerian_tour_fleri();
     std::vector<int> get_eulerian_tour_effective();
 
+    int check_bipart(std::vector<char> &marks);
+    std::vector<std::pair<int, int>> get_max_matching_bipart();
+
 private:
     int n, m;
     char view;
@@ -50,6 +53,8 @@ private:
 
     void release_memory(char view_to_release);
     void dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges);
+    void dfs2(int v, char c, std::vector<char> &marks, int &res);
+    bool dfs3(int v, std::vector<char> &used, std::vector<int> &parent);
     bool is_bridge(int u, int v, std::vector<std::set<int>> &edges);
 };
 

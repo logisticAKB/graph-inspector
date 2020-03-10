@@ -26,13 +26,19 @@ int main() {
     gr->read_graph("../graph-examples/in.txt");
 //    Graph g = gr->get_spanning_tree_boruvka();
 //    g.write_graph("../graph-examples/out.txt");
-    bool circle_exist;
-    cout << gr->check_euler(circle_exist) << endl;
-    cout << "has cycle: " << circle_exist << endl;
-    vector<int> v = gr->get_eulerian_tour_effective();
-    for (auto i : v) cout << i << ' ';
-    delete(gr);
 
+//    bool circle_exist;
+//    cout << gr->check_euler(circle_exist) << endl;
+//    cout << "has cycle: " << circle_exist << endl;
+//    vector<int> v = gr->get_eulerian_tour_effective();
+//    for (auto i : v) cout << i << ' ';
+
+    std::vector<char> marks(1e5, ' ');
+    cout << gr->check_bipart(marks) << endl;
+    for (int i = 0; i < 9; i++) cout << i + 1 << ' ' << marks[i] << endl;
+    std::vector<std::pair<int, int>> ans = gr->get_max_matching_bipart();
+    for (auto it : ans) cout << it.first << ' ' << it.second << endl;
+    delete(gr);
 
     return 0;
 }
