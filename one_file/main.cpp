@@ -3,47 +3,12 @@
 #include <sstream>
 #include <climits>
 #include <algorithm>
+#include <stack>
+#include <queue>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
-
-class Graph {
-public:
-    Graph() {};
-    Graph(int n);
-
-    void readGraph(const std::string& file_name);
-    void writeGraph(const std::string& file_name);
-
-    void addEdge(int from, int to, int weight);
-    void removeEdge(int from, int to);
-    int changeEdge(int from, int to, int new_weight);
-
-    void transformToAdjList();
-    void transformToAdjMatrix();
-    void transformToListOfEdges();
-
-    Graph getSpaingTreePrima();
-    Graph getSpaingTreeKruscal();
-    Graph getSpaingTreeBoruvka();
-
-private:
-    int n, m;
-    char view;
-    bool is_weighted;
-    bool is_directed;
-
-    std::vector<std::vector<int>> adj_matrix;
-
-    std::vector<std::set<int>> unweighted_adj_list;
-    std::vector<std::map<int, int>> adj_list;
-
-    std::set<std::pair<int, int>> unweighted_list_of_edges;
-    std::map<std::pair<int, int>, int> list_of_edges;
-
-    void release_memory(char view_to_release);
-};
 
 class DSU {
 public:
@@ -84,13 +49,74 @@ void DSU::unite(int x, int y) {
     }
 }
 
-//Graph::Graph();
+class Graph {
+public:
+    Graph() {};
+    Graph(int n);
+    Graph(int n, bool flag);
+
+    void readGraph(const std::string& file_name);
+    void writeGraph(const std::string& file_name);
+
+    void addEdge(int from, int to, int weight);
+    void removeEdge(int from, int to);
+    int changeEdge(int from, int to, int new_weight);
+
+    void transformToAdjList();
+    void transformToAdjMatrix();
+    void transformToListOfEdges();
+
+    Graph getSpaingTreePrima();
+    Graph getSpaingTreeKruscal();
+    Graph getSpaingTreeBoruvka();
+
+    int checkEuler(bool &circle_exist);
+    std::vector<int> getEuleranTourFleri();
+    std::vector<int> getEuleranTourEffective();
+
+    int checkBipart(std::vector<char> &marks);
+    std::vector<std::pair<int, int>> getMaximumMatchingBipart();
+
+    Graph flowFordFulkerson(int source, int sink);
+    Graph flowDinitz(int source, int sink);
+
+private:
+    int n, m;
+    char view;
+    bool is_weighted;
+    bool is_directed;
+
+    std::vector<std::vector<int>> adj_matrix;
+
+    std::vector<std::set<int>> unweighted_adj_list;
+    std::vector<std::map<int, int>> adj_list;
+
+    std::set<std::pair<int, int>> unweighted_list_of_edges;
+    std::map<std::pair<int, int>, int> list_of_edges;
+
+    void release_memory(char view_to_release);
+    void dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges);
+    void dfs2(int v, char c, std::vector<char> &marks, int &res);
+    bool dfs3(int v, std::vector<char> &used, std::vector<int> &parent);
+    bool bfs(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<char> &used, std::vector<std::pair<int, int>> &parent);
+    bool bfs2(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<std::set<int>> &layer_net);
+    bool is_bridge(int u, int v, std::vector<std::set<int>> &edges);
+};
 
 Graph::Graph(int n) {
     Graph::n = n;
     view = 'L';
     is_weighted = true;
     is_directed = false;
+
+    adj_list.resize(n);
+}
+
+Graph::Graph(int n, bool flag) {
+    Graph::n = n;
+    view = 'L';
+    is_weighted = true;
+    is_directed = true;
 
     adj_list.resize(n);
 }
@@ -122,6 +148,97 @@ void Graph::release_memory(char view_to_release) {
         }
         default:;
     }
+}
+
+void Graph::dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges) {
+    used[u] = true;
+    enter[u] = ret[u] = time++;
+    for (auto v : edges[u]) {
+        if (v == p) continue;
+        if (used[v])
+            ret[u] = std::min(ret[u], enter[v]);
+        else {
+            dfs(v, u, time, used, edges, enter, ret, bridges);
+            ret[u] = std::min(ret[u], ret[v]);
+            if (ret[v] > enter[u]) bridges.emplace_back(u, v);
+        }
+    }
+}
+
+void Graph::dfs2(int v, char c, std::vector<char> &marks, int &res) {
+    marks[v] = c;
+    for (int u : unweighted_adj_list[v]) {
+        if (marks[u] == ' ') dfs2(u, c == 'A' ? 'B' : 'A', marks, res);
+        else if (marks[u] == c) res = 0;
+    }
+}
+
+bool Graph::dfs3(int v, std::vector<char> &used, std::vector<int> &parent) {
+    if (used[v]) return false;
+    used[v] = true;
+    for (int u : unweighted_adj_list[v]) {
+        if (parent[u] == -1 || dfs3(parent[u], used, parent)) {
+            parent[u] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Graph::bfs(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<char> &used, std::vector<std::pair<int, int>> &parent) {
+    std::queue<int> q;
+    q.push(source);
+    used[source] = true;
+    parent[source].first = -1;
+    parent[source].second = INT_MAX;
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        if (v == sink) return true;
+        for (auto edge : edges[v]) {
+            int u = edge.first;
+            int w = edge.second;
+            if (!used[u] && w != 0) {
+                used[u] = true;
+                q.push(u);
+                parent[u].first = v;
+                parent[u].second = std::min(parent[v].second, w);
+            }
+        }
+    }
+    return false;
+}
+
+bool Graph::bfs2(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<std::set<int>> &layer_net) {
+    std::queue<int> q;
+    std::vector<int> layer(n, -1);
+    q.push(source);
+    layer[source] = 0;
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        for (auto edge : edges[v]) {
+            int u = edge.first;
+            int w = edge.second;
+            if ((layer[u] == -1 || layer[u] > layer[v]) && w != 0) {
+                layer[u] = layer[v] + 1;
+                q.push(u);
+                layer_net[v].insert(u);
+            }
+        }
+    }
+    return layer[sink] != -1;
+}
+
+bool Graph::is_bridge(int u, int v, std::vector<std::set<int>> &edges) {
+    std::vector<int> enter(n), ret(n);
+    std::vector<char> used(n); // FIXME: assign(false)
+    std::vector<std::pair<int, int>> bridges;
+    dfs(u, -1, 0, used, edges, enter, ret, bridges);
+    for (auto bridge : bridges)  {
+        if (bridge == std::make_pair(u, v)) return true;
+    }
+    return false;
 }
 
 void Graph::readGraph(const std::string& file_name) {
@@ -576,14 +693,216 @@ Graph Graph::getSpaingTreeBoruvka() {
     return spanning_tree;
 }
 
+int Graph::checkEuler(bool &circle_exist) {
+    transformToAdjList();
+
+    int k_odd_vert = 0, res = 0;
+    for (int i = 0; i < n; ++i) {
+        if (unweighted_adj_list[i].size() & 1) {
+            k_odd_vert++;
+            res = i + 1;
+        }
+    }
+    if (k_odd_vert <= 2) {
+        DSU dsu(n);
+        for (int i = 0; i < n; ++i) {
+            for (auto edge : unweighted_adj_list[i]) dsu.unite(i, edge);
+        }
+        std::map<int, int> comp;
+        for (int i = 0; i < n; ++i) comp[dsu.find(i)]++;
+        bool is_ok = true;
+        for (auto it : comp) {
+            if (it.second > 1) {
+                if (is_ok) {
+                    if (!res) res = it.first + 1;
+                    is_ok = false;
+                }
+                else {
+                    res = 0;
+                    break;
+                }
+            }
+        }
+    }
+    circle_exist = (k_odd_vert == 0) && res;
+    return res;
+}
+
+std::vector<int> Graph::getEuleranTourFleri() {
+    transformToAdjList();
+
+    std::vector<std::set<int>> edges(unweighted_adj_list);
+    std::vector<int> tour;
+    tour.reserve(n);
+
+    bool has_cycle;
+    int u = checkEuler(has_cycle) - 1;
+    tour.push_back(u + 1);
+    while (!edges[u].empty()) {
+        int to = -1;
+        for (int v : edges[u]) {
+            to = v;
+            if (!is_bridge(u, v, edges)) break;
+        }
+        tour.push_back(to + 1);
+        edges[u].erase(to);
+        edges[to].erase(u);
+        u = to;
+    }
+
+    return tour;
+}
+
+std::vector<int> Graph::getEuleranTourEffective() {
+    transformToAdjList();
+
+    std::vector<std::set<int>> edges(unweighted_adj_list);
+    std::stack<int> s;
+    std::vector<int> tour;
+    tour.reserve(n);
+
+    bool has_cycle;
+    int u = checkEuler(has_cycle) - 1;
+    s.push(u);
+    while (!s.empty()) {
+        int v = s.top();
+        if (!edges[v].empty()) {
+            u = *edges[v].begin();
+            edges[v].erase(u);
+            edges[u].erase(v);
+            s.push(u);
+        } else {
+            tour.push_back(s.top() + 1);
+            s.pop();
+        }
+    }
+
+    return tour;
+}
+
+int Graph::checkBipart(std::vector<char> &marks) {
+    int res = 1;
+    for (int i = 0; i < n; ++i) {
+        if (marks[i] == ' ' && res) dfs2(i, 'A', marks,res);
+    }
+    return res;
+}
+
+std::vector<std::pair<int, int>> Graph::getMaximumMatchingBipart() {
+    transformToAdjList();
+
+    std::vector<char> used(n);
+    std::vector<char> used1(n);
+    std::vector<int> parent(n, -1);
+
+    for (int i = 0; i < n; ++i) {
+        for (int u : unweighted_adj_list[i]) {
+            if (parent[u] == -1) {
+                parent[u] = i;
+                used1[i] = true;
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (used1[i]) continue;
+        used.assign(n, false);
+        dfs3(i, used, parent);
+    }
+
+    std::vector<std::pair<int, int>> res;
+    for (int i = 0; i < n; ++i) {
+        if (parent[i] != -1) {
+            res.emplace_back(parent[i] + 1, i + 1);
+            parent[parent[i]] = -1;
+        }
+    }
+
+    return res;
+}
+
+Graph Graph::flowFordFulkerson(int source, int sink) {
+    transformToAdjList();
+    source--; sink--;
+
+    std::vector<std::map<int, int>> edges(adj_list);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : edges[i]) {
+            edges[edge.first].insert({i, 0});
+        }
+    }
+
+    std::vector<char> used(n, false);
+    std::vector<std::pair<int, int>> parent(n, {-1, INT_MAX});
+    while (bfs(source, sink, edges, used, parent)) {
+        int flow = parent[sink].second;
+        for (int v = sink; parent[v].first != -1; v = parent[v].first) {
+            edges[parent[v].first][v] -= flow;
+            edges[v][parent[v].first] += flow;
+        }
+        used.assign(n, false);
+        parent.assign(n, {-1, INT_MAX});
+    }
+
+    Graph res(n, true);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : adj_list[i]) {
+            if (edges[edge.first][i])
+                res.addEdge(i + 1, edge.first + 1, edges[edge.first][i]);
+        }
+    }
+
+    return res;
+}
+
+Graph Graph::flowDinitz(int source, int sink) {
+    transformToAdjList();
+    source--; sink--;
+
+    std::vector<std::map<int, int>> edges(adj_list);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : edges[i]) {
+            edges[edge.first].insert({i, 0});
+        }
+    }
+
+    std::vector<std::set<int>> layer_net(n);
+    std::vector<int> parent(n, -1);
+    while (bfs2(source, sink, edges, layer_net)) {
+        while (!layer_net[0].empty()) {
+            int v = 0, flow = INT_MAX;
+            parent.assign(n, -1);
+            while (layer_net[v].begin() != layer_net[v].end()) {
+                int u = *layer_net[v].begin();
+                parent[u] = v;
+                flow = std::min(flow, edges[v][u]);
+                v = u;
+            }
+            layer_net[parent[v]].erase(v);
+            if (v == sink) {
+                for (;parent[v] != -1; v = parent[v]) {
+                    edges[parent[v]][v] -= flow;
+                    edges[v][parent[v]] += flow;
+                }
+            }
+        }
+        layer_net.assign(n, {});
+    }
+
+    Graph res(n, true);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : adj_list[i]) {
+            if (edges[edge.first][i])
+                res.addEdge(i + 1, edge.first + 1, edges[edge.first][i]);
+        }
+    }
+
+    return res;
+}
+
 int main()
 {
-    Graph g;
-    g.readGraph("input.txt");
-    //Graph gg=g.getSpaingTreeBoruvka();
-    Graph gg = g.getSpaingTreeKruscal();
-    // Graph gg=g.getSpaingTreePrima();
-    gg.transformToListOfEdges();
-    gg.writeGraph("output.txt");
+
     return 0;
 }

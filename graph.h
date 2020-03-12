@@ -60,6 +60,7 @@ private:
     void dfs2(int v, char c, std::vector<char> &marks, int &res);
     bool dfs3(int v, std::vector<char> &used, std::vector<int> &parent);
     bool bfs(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<char> &used, std::vector<std::pair<int, int>> &parent);
+    bool bfs2(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<std::set<int>> &layer_net);
     bool is_bridge(int u, int v, std::vector<std::set<int>> &edges);
 };
 

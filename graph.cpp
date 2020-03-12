@@ -120,6 +120,27 @@ bool Graph::bfs(int source, int sink, std::vector<std::map<int, int>> &edges, st
     return false;
 }
 
+bool Graph::bfs2(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<std::set<int>> &layer_net) {
+    std::queue<int> q;
+    std::vector<int> layer(n, -1);
+    q.push(source);
+    layer[source] = 0;
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        for (auto edge : edges[v]) {
+            int u = edge.first;
+            int w = edge.second;
+            if ((layer[u] == -1 || layer[u] > layer[v]) && w != 0) {
+                layer[u] = layer[v] + 1;
+                q.push(u);
+                layer_net[v].insert(u);
+            }
+        }
+    }
+    return layer[sink] != -1;
+}
+
 bool Graph::is_bridge(int u, int v, std::vector<std::set<int>> &edges) {
     std::vector<int> enter(n), ret(n);
     std::vector<char> used(n); // FIXME: assign(false)
@@ -733,6 +754,51 @@ Graph Graph::flow_ford_fulkerson(int source, int sink) {
         }
         used.assign(n, false);
         parent.assign(n, {-1, INT_MAX});
+    }
+
+    Graph res(n, true);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : adj_list[i]) {
+            if (edges[edge.first][i])
+                res.add_edge(i + 1, edge.first + 1, edges[edge.first][i]);
+        }
+    }
+
+    return res;
+}
+
+Graph Graph::flow_dinitz(int source, int sink) {
+    transform_to_adj_list();
+    source--; sink--;
+
+    std::vector<std::map<int, int>> edges(adj_list);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : edges[i]) {
+            edges[edge.first].insert({i, 0});
+        }
+    }
+
+    std::vector<std::set<int>> layer_net(n);
+    std::vector<int> parent(n, -1);
+    while (bfs2(source, sink, edges, layer_net)) {
+        while (!layer_net[0].empty()) {
+            int v = 0, flow = INT_MAX;
+            parent.assign(n, -1);
+            while (layer_net[v].begin() != layer_net[v].end()) {
+                int u = *layer_net[v].begin();
+                parent[u] = v;
+                flow = std::min(flow, edges[v][u]);
+                v = u;
+            }
+            layer_net[parent[v]].erase(v);
+            if (v == sink) {
+                for (;parent[v] != -1; v = parent[v]) {
+                    edges[parent[v]][v] -= flow;
+                    edges[v][parent[v]] += flow;
+                }
+            }
+        }
+        layer_net.assign(n, {});
     }
 
     Graph res(n, true);

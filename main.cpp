@@ -22,8 +22,8 @@ int main() {
     //a = {};
     //cout << a.capacity() << endl;
 
-    auto *gr = new Graph();
-    gr->read_graph("../graph-examples/in.txt");
+    //auto *gr = new Graph();
+    //gr->read_graph("../graph-examples/in.txt");
 //    Graph g = gr->get_spanning_tree_boruvka();
 //    g.write_graph("../graph-examples/out.txt");
 
@@ -39,11 +39,17 @@ int main() {
 //    std::vector<std::pair<int, int>> ans = gr->get_max_matching_bipart();
 //    for (auto it : ans) cout << it.first << ' ' << it.second << endl;
 
+    //Graph g = gr->flow_ford_fulkerson(1, 4);
+    //g.write_graph("../graph-examples/out.txt");
+
+
+
+    //delete(gr);
+
+    auto *gr = new Graph();
+    gr->read_graph("../graph-examples/in.txt");
     Graph g = gr->flow_ford_fulkerson(1, 4);
     g.write_graph("../graph-examples/out.txt");
-
-
-
     delete(gr);
 
     return 0;
