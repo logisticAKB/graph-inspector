@@ -14,6 +14,7 @@ class Graph {
 public:
     Graph();
     Graph(int n);
+    Graph(int n, bool flag);
 
     void read_graph(const std::string& file_name);
     void write_graph(const std::string& file_name);
@@ -37,6 +38,9 @@ public:
     int check_bipart(std::vector<char> &marks);
     std::vector<std::pair<int, int>> get_max_matching_bipart();
 
+    Graph flow_ford_fulkerson(int source, int sink);
+    Graph flow_dinitz(int source, int sink);
+
 private:
     int n, m;
     char view;
@@ -55,6 +59,7 @@ private:
     void dfs(int u, int p, int time, std::vector<char> &used, std::vector<std::set<int>> &edges, std::vector<int> &enter, std::vector<int> &ret, std::vector<std::pair<int, int>> &bridges);
     void dfs2(int v, char c, std::vector<char> &marks, int &res);
     bool dfs3(int v, std::vector<char> &used, std::vector<int> &parent);
+    bool bfs(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<char> &used, std::vector<std::pair<int, int>> &parent);
     bool is_bridge(int u, int v, std::vector<std::set<int>> &edges);
 };
 

@@ -7,6 +7,7 @@
 #include <climits>
 #include <algorithm>
 #include <stack>
+#include <queue>
 
 #include "graph.h"
 #include "dsu.h"
@@ -19,6 +20,15 @@ Graph::Graph(int n) {
     is_weighted = true;
     is_directed = false;
     
+    adj_list.resize(n);
+}
+
+Graph::Graph(int n, bool flag) {
+    Graph::n = n;
+    view = 'L';
+    is_weighted = true;
+    is_directed = true;
+
     adj_list.resize(n);
 }
 
@@ -81,6 +91,30 @@ bool Graph::dfs3(int v, std::vector<char> &used, std::vector<int> &parent) {
         if (parent[u] == -1 || dfs3(parent[u], used, parent)) {
             parent[u] = v;
             return true;
+        }
+    }
+    return false;
+}
+
+bool Graph::bfs(int source, int sink, std::vector<std::map<int, int>> &edges, std::vector<char> &used, std::vector<std::pair<int, int>> &parent) {
+    std::queue<int> q;
+    q.push(source);
+    used[source] = true;
+    parent[source].first = -1;
+    parent[source].second = INT_MAX;
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        if (v == sink) return true;
+        for (auto edge : edges[v]) {
+            int u = edge.first;
+            int w = edge.second;
+            if (!used[u] && w != 0) {
+                used[u] = true;
+                q.push(u);
+                parent[u].first = v;
+                parent[u].second = std::min(parent[v].second, w);
+            }
         }
     }
     return false;
@@ -672,6 +706,40 @@ std::vector<std::pair<int, int>> Graph::get_max_matching_bipart() {
         if (parent[i] != -1) {
             res.emplace_back(parent[i] + 1, i + 1);
             parent[parent[i]] = -1;
+        }
+    }
+
+    return res;
+}
+
+Graph Graph::flow_ford_fulkerson(int source, int sink) {
+    transform_to_adj_list();
+    source--; sink--;
+
+    std::vector<std::map<int, int>> edges(adj_list);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : edges[i]) {
+            edges[edge.first].insert({i, 0});
+        }
+    }
+
+    std::vector<char> used(n, false);
+    std::vector<std::pair<int, int>> parent(n, {-1, INT_MAX});
+    while (bfs(source, sink, edges, used, parent)) {
+        int flow = parent[sink].second;
+        for (int v = sink; parent[v].first != -1; v = parent[v].first) {
+            edges[parent[v].first][v] -= flow;
+            edges[v][parent[v].first] += flow;
+        }
+        used.assign(n, false);
+        parent.assign(n, {-1, INT_MAX});
+    }
+
+    Graph res(n, true);
+    for (int i = 0; i < n; ++i) {
+        for (auto edge : adj_list[i]) {
+            if (edges[edge.first][i])
+                res.add_edge(i + 1, edge.first + 1, edges[edge.first][i]);
         }
     }
 
