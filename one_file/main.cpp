@@ -10,6 +10,8 @@
 #include <set>
 #include <map>
 
+using namespace std;
+
 class DSU {
 public:
     DSU(int n);
@@ -781,6 +783,7 @@ std::vector<int> Graph::getEuleranTourEffective() {
 }
 
 int Graph::checkBipart(std::vector<char> &marks) {
+    transformToAdjList();
     int res = 1;
     for (int i = 0; i < n; ++i) {
         if (marks[i] == ' ' && res) dfs2(i, 'A', marks,res);
@@ -901,8 +904,29 @@ Graph Graph::flowDinitz(int source, int sink) {
     return res;
 }
 
-int main()
-{
+int main(){
+
+    Graph graph;
+    graph.readGraph("input.txt");
+    std::ifstream stream;
+    int n, m, a, b;
+    std::vector< std::pair<std::pair<int, int>, int>> edges;
+    stream.open("input.txt");
+    {
+        char type;
+        stream >> type >> n >> m >> a >> b;
+        int from, to, weight = 1;
+        for (int i = 1; i <= m; ++i) {
+            stream >> from >> to >> weight;
+            edges.emplace_back(std::make_pair(from, to), weight);
+        }
+    }
+    stream.close();
+
+//Graph g = graph.flowDinitz(1, n);
+    Graph g = graph.flowFordFulkerson(1, n);
+    g.transformToListOfEdges();
+    g.writeGraph("output.txt");
 
     return 0;
 }

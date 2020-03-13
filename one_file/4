@@ -1,0 +1,18 @@
+int main()
+{
+    freopen("output.txt", "w", stdout);
+    Graph g;
+    g.readGraph("input.txt");
+    g.transformToListOfEdges();
+    std::vector<char> marks(1e5, ' ');
+    if (!g.checkBipart(marks))
+        std::cout << -1 << std::endl;
+    else
+    {
+        std::vector<std::pair<int, int>> vec = g.getMaximumMatchingBipart();
+        std::cout << vec.size() << std::endl;
+        for (auto i : vec)
+            std::cout << i.first << " " << i.second << std::endl;
+    }
+    return 0;
+} 

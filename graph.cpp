@@ -692,6 +692,7 @@ std::vector<int> Graph::get_eulerian_tour_effective() {
 }
 
 int Graph::check_bipart(std::vector<char> &marks) {
+    transform_to_adj_list();
     int res = 1;
     for (int i = 0; i < n; ++i) {
         if (marks[i] == ' ' && res) dfs2(i, 'A', marks,res);
